@@ -1,150 +1,143 @@
 const pg = require('pg');
 const format = require('pg-format');
 const client = new pg.Client(
-  process.env.DATABASE_URL || 'postgres://localhost/chore_wheel'
+  process.env.DATABASE_URL || 'postgres://localhost/acme_schools'
 );
 
 client.connect();
 
 const sync = async () => {
   const SQL = `
-  DROP TABLE IF EXISTS roommate_chores;
-  DROP TABLE IF EXISTS roommates;
-  DROP TABLE IF EXISTS chores;
+  DROP TABLE IF EXISTS school_students;
+  DROP TABLE IF EXISTS schools;
+  DROP TABLE IF EXISTS students;
 
   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-  CREATE TABLE roommates (
+  CREATE TABLE schools (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR UNIQUE NOT NULL
   );
 
 
-  CREATE TABLE chores (
+  CREATE TABLE students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR NOT NULL
   );
 
 
-  CREATE TABLE roommate_chores (
+  CREATE TABLE school_students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    "roommateId" UUID NOT NULL REFERENCES roommates(id),
-    "choreId" UUID NOT NULL REFERENCES chores(id),
-    "isDone" BOOLEAN DEFAULT false
+    "schoolId" UUID NOT NULL REFERENCES schools(id),
+    "studentId" UUID NOT NULL REFERENCES students(id)
   );
   `;
   await client.query(SQL);
 };
 
-// ROOMMATES REQUESTS
-const readRoommates = async () => {
-  return (await client.query('SELECT * FROM roommates')).rows;
+// SCHOOLS REQUESTS
+const readSchools = async () => {
+  return (await client.query('SELECT * FROM schools')).rows;
 };
-const readRoommate = async id => {
-  const SQL = 'SELECT * FROM roommates WHERE id = $1';
+const readSchool = async id => {
+  const SQL = 'SELECT * FROM schools WHERE id = $1';
   const response = await client.query(SQL, [id]);
 };
-const createRoommate = async rm => {
-  const SQL = 'INSERT INTO roommates (name) VALUES ($1) RETURNING *';
-  const response = await client.query(SQL, [rm.name]);
+const createSchool = async school => {
+  const SQL = 'INSERT INTO schools (name) VALUES ($1) RETURNING *';
+  const response = await client.query(SQL, [school.name]);
   return response.rows[0];
 };
-const updateRoommate = async rm => {
-  const SQL = 'UPDATE roommates SET name = $1  WHERE id=$2 RETURNING *';
-  const response = await client.query(SQL, [rm.name, rm.id]);
+const updateSchool = async school => {
+  const SQL = 'UPDATE schools SET name = $1  WHERE id=$2 RETURNING *';
+  const response = await client.query(SQL, [school.name, school.id]);
   return response.rows[0];
 };
-const deleteRoommate = async id => {
-  const SQL = `DELETE FROM roommates WHERE id=$1`;
+const deleteSchool = async id => {
+  const SQL = `DELETE FROM schools WHERE id=$1`;
   const response = await client.query(SQL, [id]);
   return response.rows;
 };
 
-// CHORES REQUESTS
-const readChores = async () => {
-  return (await client.query('SELECT * FROM chores')).rows;
+// STUDENTS REQUESTS
+const readStudents = async () => {
+  return (await client.query('SELECT * FROM students')).rows;
 };
-const readChore = async id => {
-  const SQL = 'SELECT * FROM chores WHERE id = $1';
+const readStudent = async id => {
+  const SQL = 'SELECT * FROM students WHERE id = $1';
   const response = await client.query(SQL, [id]);
 };
-const createChore = async chore => {
-  const SQL = 'INSERT INTO chores (name) SELECT ($1) RETURNING *';
-  const response = await client.query(SQL, [chore.name]);
+const createStudent = async student => {
+  const SQL = 'INSERT INTO students (name) SELECT ($1) RETURNING *';
+  const response = await client.query(SQL, [student.name]);
   return response.rows[0];
 };
-const updateChore = async chore => {
-  const SQL = 'UPDATE chores SET name = $1  WHERE id=$2 RETURNING *';
-  const response = await client.query(SQL, [chore.name, chore.id]);
+const updateStudent = async student => {
+  const SQL = 'UPDATE students SET name = $1  WHERE id=$2 RETURNING *';
+  const response = await client.query(SQL, [student.name, student.id]);
   return response.rows[0];
 };
-const deleteChore = async id => {
+const deleteStudent = async id => {
   const SQL = `
-  DELETE FROM chores WHERE id=$1
+  DELETE FROM students WHERE id=$1
   `;
   const response = await client.query(SQL, [id]);
   return response.rows;
 };
 
-// ROOMMATE CHORES REQUESTS
-const readRoommateChores = async () => {
-  const SQL = 'SELECT * FROM roommate_chores';
+// SCHOOL STUDENTS REQUESTS
+const readSchoolStudents = async () => {
+  const SQL = 'SELECT * FROM school_students';
   const response = await client.query(SQL);
   return response.rows;
 };
-const readRoommateChore = async id => {
-  const SQL = 'SELECT * FROM roommate_chores WHERE id = $1';
+const readSchoolStudent = async id => {
+  const SQL = 'SELECT * FROM school_students WHERE id = $1';
   const response = await client.query(SQL, [id]);
 };
-const createRoommateChores = async mappings => {
-  console.log(mappings);
-  const formattedMapping = mappings.map(m => [m.roommateId, m.choreId]);
-  const createSQL = `DELETE FROM roommate_chores;
-    INSERT INTO roommate_chores ("roommateId", "choreId") VALUES %L RETURNING *`;
-  const sql = format(createSQL, formattedMapping);
-  const response = await client.query(sql);
-  return response;
-};
-const updateRoommateChore = async roommateChore => {
+const createSchoolStudent = async schoolStudent => {
   const SQL =
-    'UPDATE roommate_chores SET "roommateId" = $1, "choreId" = $2, "isDone" = $3  WHERE id=$4 RETURNING *';
+    'INSERT INTO school_students ("schoolId", "studentId") VALUES ($1, $2) RETURNING *';
   const response = await client.query(SQL, [
-    roommateChore.roommateId,
-    roommateChore.choreId,
-    roommateChore.isDone,
-    roommateChore.id,
+    schoolStudent.schoolId,
+    schoolStudent.studentId,
   ]);
   return response.rows[0];
 };
-
-const deleteRoommateChores = async id => {
-  const SQL = 'DELETE FROM roommate_chores';
-  const response = await client.query(SQL);
-  return response.rows;
+const updateSchoolStudent = async schoolStudent => {
+  const SQL =
+    'UPDATE school_students SET "schoolId" = $1, "studentId" = $2 WHERE id=$3 RETURNING *';
+  const response = await client.query(SQL, [
+    schoolStudent.schoolId,
+    schoolStudent.studentId,
+    schoolStudent.id,
+  ]);
+  return response.rows[0];
 };
-
-const deleteRoommateChore = async id => {
-  const SQL = 'DELETE FROM roommate_chores WHERE id=$1';
+const deleteSchoolStudent = async id => {
+  const SQL = 'DELETE FROM school_students WHERE id=$1';
   const response = await client.query(SQL, [id]);
   return response.rows;
 };
 
 module.exports = {
   sync,
-  readRoommates,
-  readRoommate,
-  createRoommate,
-  updateRoommate,
-  deleteRoommate,
-  readChores,
-  readChore,
-  createChore,
-  updateChore,
-  deleteChore,
-  readRoommateChores,
-  readRoommateChore,
-  createRoommateChores,
-  updateRoommateChore,
-  deleteRoommateChores,
-  deleteRoommateChore,
+
+  readSchools,
+  readSchool,
+  createSchool,
+  updateSchool,
+  deleteSchool,
+
+  readStudents,
+  readStudent,
+  createStudent,
+  updateStudent,
+  deleteStudent,
+
+  readSchoolStudents,
+  readSchoolStudent,
+  createSchoolStudent,
+  updateSchoolStudent,
+  deleteSchoolStudent,
 };

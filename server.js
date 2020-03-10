@@ -3,7 +3,6 @@ const path = require('path');
 const app = express();
 const morgan = require('morgan');
 const db = require('./db');
-const helpers = require('./helpers');
 app.use(require('cors')());
 app.use(express.json());
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
@@ -23,95 +22,90 @@ app.get('/', (req, res, next) =>
   res.sendFile(path.join(__dirname, 'index.html'))
 );
 
-// ROOMMATES REQUESTS
-app.get('/api/roommates', (req, res, next) => {
-  db.readRoommates()
-    .then(rms => res.send(rms))
+// SCHOOLS REQUESTS
+app.get('/api/schools', (req, res, next) => {
+  db.readSchools()
+    .then(schools => res.send(schools))
     .catch(next);
 });
-app.get('/api/roommates/:id', (req, res, next) => {
+app.get('/api/schools/:id', (req, res, next) => {
   const id = req.params.id;
-  db.readRoommate(req.params.id)
-    .then(rm => res.send(rm))
+  db.readSchool(req.params.id)
+    .then(school => res.send(school))
     .catch(next);
 });
-app.post('/api/roommates/', (req, res, next) => {
-  db.createRoommate(req.body)
-    .then(rm => res.send(rm))
+app.post('/api/schools/', (req, res, next) => {
+  db.createSchool(req.body)
+    .then(school => res.send(school))
     .catch(next);
 });
-app.delete('/api/roommates/:id', (req, res, next) => {
-  db.deleteRoommate(req.params.id)
+app.delete('/api/schools/:id', (req, res, next) => {
+  db.deleteSchool(req.params.id)
     .then(() => res.sendStatus(204))
     .catch(next);
 });
-app.put('/api/roommates/:id', (req, res, next) => {
+app.put('/api/schools/:id', (req, res, next) => {
   const id = req.params.id;
-  db.updateRoommate(req.body).then(updated => {
+  db.updateSchool(req.body).then(updated => {
     res.send(updated);
   });
 });
 
-// CHORES REQUESTS
-app.get('/api/chores', (req, res, next) => {
-  db.readChores()
-    .then(chores => res.send(chores))
+// STUDENTS REQUESTS
+app.get('/api/students', (req, res, next) => {
+  db.readStudents()
+    .then(students => res.send(students))
     .catch(next);
 });
-app.get('/api/chores/:id', (req, res, next) => {
+app.get('/api/students/:id', (req, res, next) => {
   const id = req.params.id;
-  db.readChore(req.params.id)
-    .then(chore => res.send(chore))
+  db.readStudent(req.params.id)
+    .then(student => res.send(student))
     .catch(next);
 });
-app.post('/api/chores', (req, res, next) => {
-  db.createChore(req.body)
-    .then(chore => res.send(chore))
+app.post('/api/students', (req, res, next) => {
+  db.createStudent(req.body)
+    .then(student => res.send(student))
     .catch(next);
 });
-app.delete('/api/chores/:id', (req, res, next) => {
-  db.deleteChore(req.params.id)
+app.delete('/api/students/:id', (req, res, next) => {
+  db.deleteStudent(req.params.id)
     .then(() => res.sendStatus(204))
     .catch(next);
 });
-app.put('/api/chores/:id', (req, res, next) => {
+app.put('/api/students/:id', (req, res, next) => {
   const id = req.params.id;
-  db.updateChore(req.body).then(updated => {
+  db.updateStudent(req.body).then(updated => {
     res.send(updated);
   });
 });
 
-// ROOMMATE CHORES REQUESTS
-app.get('/api/roommate_chores', (req, res, next) => {
-  db.readRoommateChores()
-    .then(rmc => res.send(rmc))
+// SCHOOL STUDENTS REQUESTS
+app.get('/api/school_students', (req, res, next) => {
+  db.readSchoolStudents()
+    .then(schoolStudents => res.send(schoolStudents))
     .catch(next);
 });
-app.get('/api/roommate_chores/:id', (req, res, next) => {
+app.get('/api/school_students/:id', (req, res, next) => {
   const id = req.params.id;
-  db.readRoommateChore(req.params.id)
-    .then(rmc => res.send(rmc))
+  db.readSchoolStudent(req.params.id)
+    .then(schoolStudent => res.send(schoolStudent))
     .catch(next);
 });
-app.post('/api/roommate_chores', (req, res, next) => {
-  const mappedChores = helpers.mapChoresToRoommates(req.body);
-  db.createRoommateChores(mappedChores)
-    .then(() => res.send(mappedChores))
+app.post('/api/school_students', (req, res, next) => {
+  db.createSchoolStudent(req.body)
+    .then(schoolStudent => res.send(schoolStudent))
     .catch(next);
 });
-app.delete('/api/roommate_chores/', (req, res, next) => {
-  db.deleteRoommateChores()
+
+app.delete('/api/school_students/:id', (req, res, next) => {
+  db.deleteSchoolStudent(req.params.id)
     .then(() => res.sendStatus(204))
     .catch(next);
 });
-app.delete('/api/roommate_chores/:id', (req, res, next) => {
-  db.deleteRoommateChore(req.params.id)
-    .then(() => res.sendStatus(204))
-    .catch(next);
-});
-app.put('/api/roommate_chores/:id', (req, res, next) => {
+app.put('/api/school_students/:id', (req, res, next) => {
   const id = req.params.id;
-  db.updateRoommateChore(req.body).then(updated => {
+  db.updateSchoolStudent(req.body).then(updated => {
     res.send(updated);
   });
 });

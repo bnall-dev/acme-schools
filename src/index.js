@@ -1,154 +1,107 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import Wheel from '../components/Wheel';
-import CreateRoommateForm from '../components/CreateRoommateForm';
-import CreateChoreForm from '../components/CreateChoreForm';
-import RoommatesList from '../components/RoommatesList';
-import ChoresList from '../components/ChoresList';
-import RoommateChores from '../components/RoommateChores';
-import Header from '../components/Header';
+import Header from '../../components/Header';
+import CreateStudent from '../../components/CreateStudent';
+import CreateSchool from '../../components/CreateSchool';
+import Schools from '../../components/Schools';
 
 const root = document.querySelector('#root');
 
 const App = () => {
-  const [roommates, setRoommates] = useState([]);
-  const [chores, setChores] = useState([]);
-  const [roommateChores, setRoommateChores] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [schoolStudents, setSchoolStudents] = useState([]);
   const [view, setView] = useState('#');
-  const [message, setMessage] = useState([
-    'Add Roommates and Chores',
-    'Spin the Wheel to Assign Chores!',
-  ]);
 
   useEffect(() => {
-    Promise.all([axios.get('/api/roommates'), axios.get('/api/chores')])
+    Promise.all([axios.get('/api/schools'), axios.get('/api/students')])
       .then(responses => responses.map(response => response.data))
       .then(results => {
-        setRoommates(results[0]);
-        setChores(results[1]);
+        setSchools(results[0]);
+        setStudents(results[1]);
       })
       .catch(ex => setError(ex.response.data.message));
   }, []);
 
   useEffect(() => {
-    Promise.all([axios.get('/api/roommate_chores')])
+    Promise.all([axios.get('/api/school_students')])
       .then(responses => responses.map(response => response.data))
       .then(results => {
-        setRoommateChores(results[0]);
+        setSchoolStudents(results[0]);
       })
       .catch(ex => setError(ex.response.data.message));
   }, []);
 
-  const createRoommate = async rm => {
-    const created = (await axios.post('/api/roommates/', rm)).data;
-    setRoommates([...roommates, created]);
+  //SCHOOLS REQUESTS
+  const createSchool = async school => {
+    const created = (await axios.post('/api/schools/', school)).data;
+    setSchools([...schools, created]);
   };
-  const deleteRoommate = async rmToDestroy => {
-    const assignedChore = roommateChores.filter(
-      rmc => rmc.roommateId === rmToDestroy.id
+  const deleteSchool = async schoolToDestroy => {
+    const enrolledStudents = schoolStudents.filter(
+      schoolStudent => schoolStudent.schoolId === schoolToDestroy.id
     );
-    if (assignedChore.length === 0) {
-      await axios.delete(`/api/roommates/${rmToDestroy.id}`);
-      setRoommates(roommates.filter(rm => rm.id !== rmToDestroy.id));
+    if (enrolledStudents.length === 0) {
+      await axios.delete(`/api/schools/${schoolToDestroy.id}`);
+      setSchools(schools.filter(school => school.id !== schoolToDestroy.id));
     } else {
-      assignedChore.map(chore => {
-        axios.delete(`/api/roommate_chores/${chore.id}`);
-        setRoommateChores(roommateChores.filter(rmc => rmc.id !== chore.id));
+      enrolledStudents.map(student => {
+        axios.delete(`/api/school_students/${student.id}`);
+        setSchoolStudents(
+          schoolStudents.filter(
+            schoolStudent => schoolStudent.id !== student.id
+          )
+        );
       });
-      await axios.delete(`/api/roommates/${rmToDestroy.id}`);
-      setRoommates(roommates.filter(rm => rm.id !== rmToDestroy.id));
+      await axios.delete(`/api/schools/${schoolToDestroy.id}`);
+      setSchools(schools.filter(school => school.id !== schoolToDestroy.id));
     }
   };
 
-  const createChore = async chore => {
-    const created = (await axios.post('/api/chores/', chore)).data;
-    setChores([...chores, created]);
+  //STUDENTS REQUESTS
+  const createStudent = async chore => {
+    const created = (await axios.post('/api/students/', student)).data;
+    setStudents([...students, created]);
   };
-  const deleteChore = async choreToDestroy => {
-    const assignedChore = roommateChores.filter(
-      rmc => rmc.choreId === choreToDestroy.id
+  const deleteStudent = async studentToDestroy => {
+    const enrolledStudents = schoolStudents.filter(
+      schoolStudent => schoolStudent.choreId === studentToDestroy.id
     );
-    if (assignedChore.length === 0) {
-      await axios.delete(`/api/chores/${choreToDestroy.id}`);
-      setChores(chores.filter(chore => chore.id !== choreToDestroy.id));
-    } else {
-      await axios.delete(`/api/roommate_chores/${assignedChore[0].id}`);
-      setRoommateChores(
-        roommateChores.filter(chore => chore.id !== assignedChore[0].id)
+    if (enrolledStudents.length === 0) {
+      await axios.delete(`/api/student/${studentToDestroy.id}`);
+      setStudents(
+        students.filter(student => student.id !== studentToDestroy.id)
       );
-      await axios.delete(`/api/chores/${choreToDestroy.id}`);
-      setChores(chores.filter(chore => chore.id !== choreToDestroy.id));
+    } else {
+      await axios.delete(`/api/school_students/${enrolledStudents[0].id}`);
+      setSchoolStudents(
+        schoolStudents.filter(
+          schoolStudent => schoolStudent.id !== enrolledStudents[0].id
+        )
+      );
+      await axios.delete(`/api/students/${studentToDestroy.id}`);
+      setStudents(
+        students.filter(student => student.id !== studentToDestroy.id)
+      );
     }
   };
 
-  const roommateIds = roommates.map(rm => rm.id);
-  const choreIds = chores.map(chore => chore.id);
-
-  const createRoommateChores = async assignedChores => {
-    await axios.post('/api/roommate_chores/', { roommateIds, choreIds });
-    const rmc = await axios.get('/api/roommate_chores/');
-    setRoommateChores(rmc.data);
-  };
-
-  const deleteRoommateChores = async () => {
-    await axios.delete(`/api/roommate_chores/`);
-    setRoommateChores([]);
-  };
-
-  const deleteRoommateChore = async rmcToDestroy => {
-    await axios.delete(`/api/roommate_chores/${rmcToDestroy.id}`);
-    setRoommateChores(roommateChores.filter(rmc => rmc.id !== rmcToDestroy.id));
+  //SCHOOL STUDENTS REQUESTS
+  const deleteSchoolStudent = async schoolStudentToDestroy => {
+    await axios.delete(`/api/school_students/${schoolStudentToDestroy.id}`);
+    setSchoolStudents(
+      schoolStudents.filter(
+        schoolStudent => schoolStudent.id !== schoolStudentToDestroy.id
+      )
+    );
   };
 
   return (
     <div id="app">
-      <Header view={view} setView={setView} />
-      <div id="components">
-        {view === '#' && (
-          <Wheel
-            roommates={roommates}
-            chores={chores}
-            roommateChores={roommateChores}
-            createRoommateChores={createRoommateChores}
-            setRoommateChores={setRoommateChores}
-            deleteRoommateChore={deleteRoommateChore}
-            deleteRoommateChores={deleteRoommateChores}
-            setMessage={setMessage}
-          />
-        )}
-        {view === '#' && (
-          <RoommateChores
-            roommates={roommates}
-            deleteRoommate={deleteRoommate}
-            chores={chores}
-            roommateChores={roommateChores}
-            deleteRoommateChore={deleteRoommateChore}
-            setRoommateChores={setRoommateChores}
-            message={message}
-          />
-        )}
-        {view === 'roommates' && (
-          <CreateRoommateForm createRoommate={createRoommate} />
-        )}
-        {view === 'roommates' && (
-          <RoommatesList
-            roommates={roommates}
-            deleteRoommate={deleteRoommate}
-            chores={chores}
-            roommateChores={roommateChores}
-            deleteRoommateChore={deleteRoommateChore}
-            setRoommateChores={setRoommateChores}
-          />
-        )}
-        {view === 'chores' && <CreateChoreForm createChore={createChore} />}
-        {view === 'chores' && (
-          <ChoresList
-            chores={chores}
-            deleteChore={deleteChore}
-            deleteRoommateChore={deleteRoommateChore}
-          />
-        )}
-      </div>
+      <Header />
+      <CreateStudent />
+      <CreateSchool />
+      <Schools />
     </div>
   );
 };

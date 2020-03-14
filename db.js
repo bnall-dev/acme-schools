@@ -9,8 +9,9 @@ client.connect();
 const sync = async () => {
   const SQL = `
   DROP TABLE IF EXISTS school_students;
-  DROP TABLE IF EXISTS schools;
   DROP TABLE IF EXISTS students;
+  DROP TABLE IF EXISTS schools;
+
 
   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -22,7 +23,8 @@ const sync = async () => {
 
   CREATE TABLE students (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR NOT NULL
+    name VARCHAR NOT NULL,
+    school VARCHAR
   );
 
 
@@ -68,13 +70,18 @@ const readStudent = async id => {
   const response = await client.query(SQL, [id]);
 };
 const createStudent = async student => {
-  const SQL = 'INSERT INTO students (name) SELECT ($1) RETURNING *';
-  const response = await client.query(SQL, [student.name]);
+  const SQL = 'INSERT INTO students (name, school) VALUES($1, $2) RETURNING *';
+  const response = await client.query(SQL, [student.name, student.school]);
   return response.rows[0];
 };
 const updateStudent = async student => {
-  const SQL = 'UPDATE students SET name = $1  WHERE id=$2 RETURNING *';
-  const response = await client.query(SQL, [student.name, student.id]);
+  const SQL =
+    'UPDATE students SET name = $1, school = $2  WHERE id=$3 RETURNING *';
+  const response = await client.query(SQL, [
+    student.name,
+    student.school,
+    student.id,
+  ]);
   return response.rows[0];
 };
 const deleteStudent = async id => {
